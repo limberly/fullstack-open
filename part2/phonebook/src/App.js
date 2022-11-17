@@ -1,17 +1,16 @@
 import {useEffect, useState} from 'react'
-import axios from 'axios'
 
 import ShowPersons from './components/ShowPersons'
 import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 
+import personService from './services/persons'
+
 const App = () => {
   const [persons, setPersons] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:3001/persons').then((res) => {
-      setPersons(res.data);
-    })
+    personService.getAll().then(res => setPersons(res))
   }, [])
 
 
@@ -28,7 +27,6 @@ const App = () => {
   };
 
   const checkDuplicate = (name) => {
-    console.log('duplicate', name);
     return persons.filter((person) => person.name === name);
     
   };
@@ -37,20 +35,32 @@ const App = () => {
     event.preventDefault();
     const name = newName.trim();
     const number = newNumber.trim();
+    const duplicate = checkDuplicate(name);
 
-    if (checkDuplicate(name).length) {
-      alert(`${name} is already added to the phonebook`);
-      setNewName('');
-      setNewNumber('');
+    if (duplicate.length) {
+      if (window.confirm(`${name} already exists in the phone book. replace the old number with new one?`)) {
+        const changedPerson = {...duplicate[0], number: number};
+        personService.update(changedPerson.id, changedPerson).then((res) => {
+          setPersons(persons.map(person => {
+            return person.id !== res.id ? person : res;
+          }))
+          setNewName('');
+          setNewNumber('');
+        })
+      }
+      
 
     } else if (name === '') {
       alert('No name!');
       setNewName('');
     } else {
-      setPersons(persons.concat({name: name, number: number}));
-      
-      setNewName('');
-      setNewNumber('');
+      const personObject = {name: name, number: number};
+      personService.addPerson(personObject)
+        .then(res => {
+          setPersons(persons.concat(res));
+          setNewName('');
+          setNewNumber('');          
+        })
     }
   };
 
@@ -77,7 +87,7 @@ const App = () => {
                   newNumber={newNumber}
                   changeNewNumber={changeNewNumber}/>
       <h2>Numbers</h2>
-      <ShowPersons persons={filterPersons()}/>
+      <ShowPersons persons={filterPersons()} personsState={persons} setPersons={setPersons}/>
     </div>
   )
 };
