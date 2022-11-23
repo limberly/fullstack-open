@@ -5,6 +5,8 @@ import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 
 import personService from './services/persons'
+import Notification from './components/Notification'
+import Error from './components/Error'
 
 const App = () => {
   const [persons, setPersons] = useState([]);
@@ -17,6 +19,8 @@ const App = () => {
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [filter, setFilter] = useState('');
+  const [message, setMessage] = useState(null);
+  const [errorMessage, setError] = useState(null);
   
   const changeNewName = (event) => {
     setNewName(event.target.value);
@@ -36,6 +40,12 @@ const App = () => {
     const name = newName.trim();
     const number = newNumber.trim();
     const duplicate = checkDuplicate(name);
+    const showNotification = () => {
+      setMessage(`Added ${name} to the contacts`);
+      setTimeout(() => {
+        setMessage(null);
+      }, 2000);
+    }
 
     if (duplicate.length) {
       if (window.confirm(`${name} already exists in the phone book. replace the old number with new one?`)) {
@@ -44,6 +54,7 @@ const App = () => {
           setPersons(persons.map(person => {
             return person.id !== res.id ? person : res;
           }))
+          showNotification();
           setNewName('');
           setNewNumber('');
         })
@@ -58,6 +69,7 @@ const App = () => {
       personService.addPerson(personObject)
         .then(res => {
           setPersons(persons.concat(res));
+          showNotification();
           setNewName('');
           setNewNumber('');          
         })
@@ -80,6 +92,8 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={message}/>
+      <Error errorMessage={errorMessage}/>
       <Filter filter={filter} changeFilter={changeFilter}/>
       <h2>add a new</h2>
       <PersonForm onSubmit={addName} newName={newName} 
@@ -87,7 +101,7 @@ const App = () => {
                   newNumber={newNumber}
                   changeNewNumber={changeNewNumber}/>
       <h2>Numbers</h2>
-      <ShowPersons persons={filterPersons()} personsState={persons} setPersons={setPersons}/>
+      <ShowPersons persons={filterPersons()} personsState={persons} setPersons={setPersons} setError={setError}/>
     </div>
   )
 };

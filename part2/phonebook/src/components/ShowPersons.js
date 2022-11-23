@@ -1,6 +1,6 @@
 import personService from '../services/persons'
 
-const deletePerson = (id, personsState, setPersons) => {
+const deletePerson = (name, id, personsState, setPersons, setError) => {
     
     if (window.confirm('Delete this person from the phonebook?')) {
         
@@ -8,16 +8,22 @@ const deletePerson = (id, personsState, setPersons) => {
             .then(res => {
                 setPersons(personsState.filter(person => person.id !== id));
             })
-            .catch(error => console.log('already deleted'));
+            .catch(error => {
+                setError(`${name} already deleted from database`)
+                setPersons(personsState.filter(p => p.id !== id));
+                setTimeout(() => {
+                    setError(null)
+                }, 2000);
+            });
     }
 };
 
-const ShowPersons = ({persons, personsState, setPersons}) => {
+const ShowPersons = ({persons, personsState, setPersons, setError}) => {
     return (
         <ul>
             {persons.map((person) => <li key={person.id}>
                 {person.name}: {person.number}
-                <button onClick={() => deletePerson(person.id, personsState, setPersons)}>delete</button>
+                <button onClick={() => deletePerson(person.name, person.id, personsState, setPersons, setError)}>delete</button>
                 </li>)}
             
         </ul>
